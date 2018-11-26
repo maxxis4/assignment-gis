@@ -5,8 +5,7 @@ var pg = require("pg"); // postgres module
 // Connection
 var username = "postgres"
 var password = "postgres"
-// var host = "localhost:25432"
-var host = "147.175.184.150:25432"
+var host = "localhost:25432"
 var database = "gis"
 var conString = "postgres://" + username + ":" + password + "@" + host + "/" + database;
 
