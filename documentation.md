@@ -1,62 +1,127 @@
-*This is a documentation for a fictional project, just to show you what I expect. Notice a few key properties:*
-- *no cover page, really*
-- *no copy&pasted assignment text*
-- *no code samples*
-- *concise, to the point, gets me a quick overview of what was done and how*
-- *I don't really care about the document length*
-- *I used links where appropriate*
+# Prehľad
 
-# Overview
+Táto aplikácia zobrazuje historické pamiatky na Slovensku a okolitých malých častiach susedných štátov. Hlavné možnosti aplikácie:
+- Vyhľadávanie vybraných historických pamiatok
+  - na základe zvoleného mesta
+  - na základe zvolenej polohy a okruhu
+  - najbližšie pamiatky od mojej polohy
+- Vyhľadávanie zaujímavých miest na riekach
+- Vyhľadanie nabližších parkovacích miest v okolí zvolenej pamiatky
+- Každá pamiatka má svoje špecifické označenie
+- Zoradzovanie výsledkov v tabuľke pomocou najbližších výsledkov
+- Interaktívna tabuľka s aktívnym zobrazaovaním práve zvolenej pamiatky
+- Zobrazenie názvov vybraných objektov na mape
 
-This application shows hotels in Bratislava on a map. Most important features are:
-- search by proximity to my current location
-- search by hotel name
-- intelligent ordering - by proximity and by hotel features
-- hotels on the map are color coded by their quality assigned in stars (standard)
+Takto vyzerá aplikácia s vyhľadanými pamiatkami:
 
-This is it in action:
+![Screenshot](find_by_name.png)
 
-![Screenshot](screenshot.png)
-
-The application has 2 separate parts, the client which is a [frontend web application](#frontend) using mapbox API and mapbox.js and the [backend application](#backend) written in [Rails](http://rubyonrails.org/), backed by PostGIS. The frontend application communicates with backend using a [REST API](#api).
+Aplikácia je zložená z FE, ktorý je vytvorený pomocou knižnice [Leaflet](https://leafletjs.com/) pre hlavný mapový komponent a [Pug.js](https://pugjs.org) pre vytvorenie HTML stránky. Backend je vytvorený vo frameworku [Express.js](https://expressjs.com/), ktorý beží na [Node.js](https://nodejs.org/en/). Tento framework sa pripája na [PostGIS](https://postgis.net/) databázu, v ktorej sú uložené všetky dáta. Keďže [Express.js](https://expressjs.com/) je serverový framework, všetko potrebné je vykonané na serveri, ktorý na FE odošle plnú HTML stránku so všetkými údajmi.
 
 # Frontend
 
-The frontend application is a static HTML page (`index.html`), which shows a mapbox.js widget. It is displaying hotels, which are mostly in cities, thus the map style is based on the Emerald style. I modified the style to better highlight main sightseeing points, restaurants and bus stops, since they are all important when selecting a hotel. I also highlighted rails tracks to assist in finding a quiet location.
+Aplikácia je vytvorená pomocou šablónového frameworku [Pug.js](https://pugjs.org), ktorý sme rozšírili o Bootstrap, jQuery a [Leaflet.awesome-markers](https://github.com/lvoogdt/Leaflet.awesome-markers), čo je opensource knižnica pre používanie vlastných ikon ako označovačov na mape. Táto knižnica bola upravená pre použitie špeciálnych ikon - [Font Awesome](https://fontawesome.com/). Taktiež sme vytvorili vlastné validácie a interakcie medzi tabuľkou a mapou, pre lepší zážitok z používania aplikácie. Pre zobrazenie geografických dát sme použili knižnicu [Leaflet](https://leafletjs.com/), spolu s nami vytvoreným mapovým podkladom na [MapBox](https://mapbox.com).
 
-All relevant frontend code is in `application.js` which is referenced from `index.html`. The frontend code is very simple, its only responsibilities are:
-- detecting user's location, using the standard [web location API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation)
-- displaying the sidebar panel with hotel list and filtering controls, driving the user interaction and calling the appropriate backend APIs
-- displaying geo features by overlaying the map with a geojson layer, the geojson is provided directly by backend APIs
+Šablóna HTML kódu sa nachádza v [map.pug](views/map.pug), kde sú aj všetky javascripty starajúce sa o interakcie tabuľky a mapy.
 
 # Backend
 
-The backend application is written in Ruby on Rails and is responsible for querying geo data, formatting the geojson and data for the sidebar panel.
+Backend je vytvorený vo frameworku [Express.js](https://expressjs.com/), ktorý beží na [Node.js](https://nodejs.org/en/). Stará sa o spracovávanie requestov z FE, pripojenie k databáze, spracovanie výsledkov z databázy a ich odoslanie na FE.
 
-## Data
+Hlavný súbor, ktorý vykonáva tieto operácie [index.js](routes/index.js).
 
-Hotel data is coming directly from Open Street Maps. I downloaded an extent covering whole Slovakia (around 1.2GB) and imported it using the `osm2pgsql` tool into the standard OSM schema in WGS 84 with hstore enabled. To speedup the queries I created an index on geometry column (`way`) in all tables. The application follows standard Rails conventions and all queries are placed in models inside `app/models`, mostly in `app/models/hotel.rb`. GeoJSON is generated by using a standard `st_asgeojson` function, however some postprocessing is necessary (in `app/controllers/search_controller.rb`) in order to merge all hotels into a single geojson.
+## Dáta
+
+Dáta boli stiahnuté z [Open Street Maps](https://www.openstreetmap.org/) a zahŕňajú celé Slovensko, spolu s okolitým hraničnými oblasťami. Celkovo bolo stiahnutých 7 súborov z oblasťami Slovenska, ktoré boli následne spojené dohromady pomocou [Osmium Tool](https://osmcode.org/osmium-tool/). Dáta dohromady majú približnú veľkosť 7.1GB. Tieto dáta boli následne spracované pomocou nástroja [osm2pgsql](https://wiki.openstreetmap.org/wiki/Osm2pgsql).
+
+Pre databázu som použil [Docker](https://www.docker.com/) obraz [starefossen/pgrouting](https://hub.docker.com/r/starefossen/pgrouting/builds/). Obsahuje okrem Postgres a PostGIS databázy aj nástroj pgAdmin4 a pgRouting.
+
+### Databáza
+
+Dáta boli po importe nasledovne upravené:
+- stĺpec osm_id bol premenovaný na id
+- bol vytvorený stĺpec geom, do ktorého boli prekonvertované údaje zo stĺpca way pomocou `ST_Transform(way, 4326);`
+- boli vytvorené indexy pre všetky tabuľky na daný stĺpec geom
+- bol vytvorený index pre tabuľku `planet_osm_polygon` za použitia `ST_Centroid(geom)`, pre rýchlejšie spracovávanie dát
+- boli vytvorené indexy pre tabuľku `planet_osm_polygon` na stĺpce `id`, `name`, `historic`, ktoré sú často používané v dopytoch
+- bol vytvorený index pre tabuľku `planet_osm_line` na stĺpec `name`
+- bol vytvorený index pre tabuľku `planet_osm_point` na stĺpec `amenity`
+
+Ukážka dopytu na databázu pre hľadanie zaujímavosti na rieke:
+```
+    SELECT  distinct(place.id), 
+            place.name as name, 
+            ST_Centroid(place.geom) as geom,
+            ST_X(ST_Centroid(place.geom)) as cent_long,
+            ST_Y(ST_Centroid(place.geom)) as cent_lat,
+            CASE 
+                WHEN place.water IS NOT NULL THEN
+                    place.water
+                WHEN place.man_made IS NOT NULL THEN
+                    place.man_made 
+            END as type
+       FROM planet_osm_polygon AS place
+       JOIN planet_osm_line AS river ON (ST_Crosses(place.geom,river.geom))
+      WHERE river.name = $1
+		    AND river.waterway = 'river'
+        AND place.admin_level is null
+        AND place.boundary is null
+        AND (place.natural = 'water' OR place.man_made = 'bridge')
+        AND (place.water <> 'river' OR place.water IS null)
+        AND place.name IS NOT NULL
+```
+Všetky requesty boli ešte obalené vo formáte, ktorý vytváral GeoJSON pre použitú knižnicu [Leaflet](https://leafletjs.com/). Taktiež boli všetky dopyty vyskladávané pomocou knižnice [Node Postgres](https://node-postgres.com/).
+
+Všetky tieto dopyty sa nachádzajú v súbore [index.js](routes/index.js).
+
+Z PostGIS funkcií som použil:
+  - **ST_Centroid**
+  - **ST_Crosses**
+  - **ST_Intersects**
+  - **ST_Intersection**
+  - **ST_Area**
+  - **ST_DWithin**
+  - **ST_Distance**
+
+Taktiež som použil tieto pomocné funkcie:
+  - **ST_X**
+  - **ST_Y**
+  - **ST_MakePoint**
 
 ## Api
 
-**Find hotels in proximity to coordinates**
+**Zobrazenie mesta**
 
-`GET /search?lat=25346&long=46346123`
+`GET /filter?city=Bratislava`
 
-**Find hotels by name, sorted by proximity and quality**
+**Zobrazenie vybraných pamiatok vo vybranom meste**
 
-`GET /search?name=hviezda&lat=25346&long=46346123`
+`GET /show?city=Bratislava&type=castle&type=monastery&type=theatre`
+
+**Zobrazenie parkovacích miest v blízkosti pamiatky**
+
+`GET /parking?id=-595748`
+
+**Zobrazenie vybraných miest záujmu na základe polohy a okruhu**
+
+`GET /around?distance=1000&lat=48.14133451830995&long=17.111997557971296&type=castle&type=monastery`
+
+**Zobrazenie najbližších vybraných miest záujmu na základe polohy**
+
+`GET /near?lat=48.14426974867694&long=17.110219001770023&type=castle&type=theatre`
+
+**Zobrazenie vybraných miest záujmu na rieke**
+
+`GET /river?river=Dunaj`
 
 ### Response
 
-API calls return json responses with 2 top-level keys, `hotels` and `geojson`. `hotels` contains an array of hotel data for the sidebar, one entry per matched hotel. Hotel attributes are (mostly self-evident):
-```
-{
-  "name": "Modra hviezda",
-  "style": "modern", # cuisine style
-  "stars": 3,
-  "address": "Panska 31"
-  "image_url": "/assets/hotels/652.png"
-}
-```
-`geojson` contains a geojson with locations of all matched hotels and style definitions.
+Na základe vybranej knižnice ako response príde kompletná naplnená HTML stránka na základe šablóny [Ukážka](example/response_example_river.html)
+
+# Spustenie
+
+Pre spustenie je potrebné mať rozbehnutú Postgres databázu s Postgisom (je možné ju nainštalovať pomocou súboru [docker-compose.yml](database/docker-compose.yml) a aplikácie [Docker](https://www.docker.com/) spolu s rozšírením [Docker-Compose](https://docs.docker.com/compose/)). Údaje o pripojení je potrebné zameniť v súbore [index.js](routes/index.js). Databáza musí byť naplnená s dátami z [Open Street Maps](https://www.openstreetmap.org/) a musí byť spustený súbor [database_update.sql](database/database_update.sql) na vytvorenie potrebných stĺpcov.
+
+Aplikácia sa zapína pomocou `npm start` ale predtým je potrebné spustiť `npm install` pre inštaláciu potrebných knižníc.
+
+

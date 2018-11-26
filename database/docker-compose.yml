@@ -1,0 +1,36 @@
+version: '2'
+
+services:
+  postgres:
+    image: starefossen/pgrouting:latest
+    environment:
+       - POSTGRES_DB=gis
+       - POSTGRES_USER=postgres
+       - POSTGRES_PASS=postgres
+       - ALLOW_IP_RANGE=0.0.0.0/0
+    # volumes:
+      #  - postgres:/data/postgres 
+    ports:
+      - "25432:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+  
+  pgadmin:
+    links:
+      - postgres:postgres
+    image: fenglc/pgadmin4
+    environment:
+            DEFAULT_USER: pgadmin4@pgadmin.org
+            DEFAULT_PASSWORD: admin
+    # volumes:
+      #  - pgadmin:/root/.pgadmin
+    ports:
+      - "5050:5050"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  postgres:
+    driver: bridge

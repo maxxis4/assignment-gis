@@ -1,0 +1,303 @@
+extends layout
+block content
+    h1.
+        Slovenské pamiatky
+    h2=message
+    div(class="row")
+        div(class="col-3")
+            table(class="table" id="result-table" style="overflow: auto")
+                thead
+                    tr
+                        th.
+                            Typ
+                        th.
+                            Názov
+                tbody
+                    each feat in jsonData.features
+                        tr(id=feat.info.id)
+                            td=feat.info.type_text
+                            td=feat.info.name
+                            
+        div(class="col-6")
+            #map
+        div(class="col-3" class="accordion" id="filters")
+            //- Hranice mesta
+            div(class="card")
+                div(class="card-header" id="heading_basic_filter")
+                    h5(class="mb-0")
+                        button(class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse_basic_filter" aria-expanded="false" aria-controls="collapse_basic_filter").
+                            Vyznačenie mesta
+            div(id="collapse_basic_filter" class="collapse" aria-labelledby="headingOne" data-parent="#filters")
+                div(class="card-body")
+                    form(action='/filter')
+                        div(class="form-group")
+                            label(for="city_name").
+                                Meno mesta: 
+                            input(class='form-control' placeholder='napr. Bratislava' name='city' required)
+                        button(type='submit' class='btn btn-primary').
+                            Zobraz
+            //- Miesta zaujmu
+            div(class="card")
+                div(class="card-header" id="heading_points_of_interest")
+                    h5(class="mb-0")
+                        button(class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse_points_of_interest" aria-expanded="false" aria-controls="collapse_points_of_interest").
+                            Miesta záujmu v meste
+            div(id="collapse_points_of_interest" class="collapse" aria-labelledby="headingOne" data-parent="#filters")
+                div(class="card-body")
+                    form(action='/show')
+                        div(class="form-group")
+                            label(for="city_name").
+                                Meno mesta: 
+                            input(class='form-control' placeholder='napr. Bratislava' name='city' required)
+                        select(class="selectpicker form-control" data-style="btn-primary" name='type'  multiple required)
+                            each histOpt in histArray
+                                option(value = histOpt.value)
+                                    =histOpt.name
+                        button(type='submit' class='btn btn-primary').
+                            Zobraz
+            //- Parkovanie
+            div(class="card")
+                div(class="card-header" id="heading_parking")
+                    h5(class="mb-0")
+                        button(class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse_parking" aria-expanded="false" aria-controls="collapse_parking").
+                            Parkovanie
+            div(id="collapse_parking" class="collapse" aria-labelledby="headingOne" data-parent="#filters")
+                div(class="card-body")
+                    form(action='/parking')
+                        div(class="form-group")
+                            label(for="city_name").
+                                Číslo pamiatky (vyplňte kliknutím na mape): 
+                            input(class='form-control id_input' placeholder='Číslo pamiatky' name='id' id='id_input' required)
+                        button(type='submit' class='btn btn-primary').
+                            Zobraz
+            //- Body zaujmu okolo bodu
+            div(class="card")
+                div(class="card-header" id="heading_poi_around_point")
+                    h5(class="mb-0")
+                        button(class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse_poi_around_point" aria-expanded="false" aria-controls="collapse_poi_around_point").
+                            Miesta záujmu v okolí
+            div(id="collapse_poi_around_point" class="collapse" aria-labelledby="headingOne" data-parent="#filters")
+                div(class="card-body")
+                    form(action='/around' id='distance_form')
+                        div(class="form-group")
+                            label(for="city_name").
+                                Veľkosť okruhu (v metroch): 
+                            input(class='form-control' placeholder='napr. 100' name='distance' id='distance_input' required)
+                            label(for="city_name").
+                                Poloha na mape - Lat, Long (vyplňte kliknutím na mape): 
+                            input(class='form-control lat_input' placeholder='Lat' name='lat' id='lat_input' required)
+                            input(class='form-control long_input' placeholder='Long' name='long' id='long_input' required)
+
+                        select(class="selectpicker form-control" data-style="btn-primary" name='type'  multiple required)
+                            each histOpt in histArray
+                                option(value = histOpt.value)
+                                    =histOpt.name
+                        
+                        button(type='submit' class='btn btn-primary').
+                            Potvrdiť
+            //- Najblizise body zaujmu
+            div(class="card")
+                div(class="card-header" id="heading_poi_nearest")
+                    h5(class="mb-0")
+                        button(class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse_poi_nearest" aria-expanded="false" aria-controls="collapse_poi_nearest").
+                            Najbližšie miesta záujmu
+            div(id="collapse_poi_nearest" class="collapse" aria-labelledby="headingOne" data-parent="#filters")
+                div(class="card-body")
+                    form(action='/near' id='distance_form')
+                        div(class="form-group")
+                            label(for="city_name").
+                                Poloha na mape - Lat, Long (vyplňte kliknutím na mape): 
+                            input(class='form-control lat_input' placeholder='Lat' name='lat' id='lat_input' required)
+                            input(class='form-control long_input' placeholder='Long' name='long' id='long_input' required)
+                        select(class="selectpicker form-control" data-style="btn-primary" name='type'  multiple required)
+                            each histOpt in histArray
+                                option(value = histOpt.value)
+                                    =histOpt.name
+                        button(type='submit' class='btn btn-primary').
+                            Potvrdiť
+            
+            //- Miesta na rieke
+            div(class="card")
+                div(class="card-header" id="heading_poi_river")
+                    h5(class="mb-0")
+                        button(class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse_poi_river" aria-expanded="false" aria-controls="collapse_poi_river").
+                            Miesta záujmu na rieke
+            div(id="collapse_poi_river" class="collapse" aria-labelledby="headingOne" data-parent="#filters")
+                div(class="card-body")
+                    form(action='/river' id='distance_form')
+                        div(class="form-group")
+                            label(for="river").
+                                Meno rieky: 
+                            input(class='form-control' placeholder='napr. Dunaj' name='river' required)
+                        button(type='submit' class='btn btn-primary').
+                            Potvrdiť
+
+    script.
+        var myData = !{JSON.stringify(jsonData)};
+        var icon_setting = !{JSON.stringify(icons)};
+        var hist_setting = !{JSON.stringify(histArray)};
+        var polygons = []
+        var myPosMarkerIcon = L.AwesomeMarkers.icon({
+                            icon: 'fas fa-home',
+                            markerColor: 'red'
+                        });
+        var myPosMarker = null;
+
+        function hasClass(ele,cls) {
+            return !!ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
+        }
+
+        function addClass(ele,cls) {
+            if (!hasClass(ele,cls)) ele.className += " "+cls;
+        }
+
+        function removeClass(ele,cls) {
+            if (hasClass(ele,cls)) {
+                var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
+                ele.className=ele.className.replace(reg,' ');
+            }
+        }
+        function setClassResultTable(ele,cls) {
+            var table = document.getElementById("result-table");
+            var rows = table.getElementsByTagName("tr");
+            for (i = 0; i < rows.length; i++) {
+                removeClass(rows[i], 'bg-info');
+            }
+            addClass(ele, cls);
+        }
+
+        function getIcon(type) {
+            icon_type = icon_setting.filter(obj => {
+                                return obj.value == type
+                            })
+            if (icon_type.length != 0){
+                return icon_type[0].icon;
+            } else {
+                return 'fas fa-home';
+            }
+        }
+
+        var onMarkerClick = function(e){
+            var els = document.querySelectorAll('.id_input');
+            for (var i=0; i < els.length; i++) {
+                els[i].setAttribute("value",this.feature.info.id);
+            }
+            if(typeof polygons[0].setIcon === 'function') {
+                for (var i=0; i < polygons.length; i++) {
+                    var marker = L.AwesomeMarkers.icon({
+                                icon: getIcon(polygons[i].feature.info.type),
+                                markerColor: 'blue'
+                            });
+                    polygons[i].setIcon(marker);
+                }
+                var selMarker = L.AwesomeMarkers.icon({
+                                icon: getIcon(e.target.feature.info.type),
+                                markerColor: 'red'
+                            });
+                e.target.setIcon(selMarker);
+            } else {
+                for (var i=0; i < polygons.length; i++) {
+                    polygons[i].setStyle({fillColor: '#0000FF'});
+                }
+                e.target.setStyle({fillColor: '#FF0000'});
+            }
+            setClassResultTable(document.getElementById(this.feature.info.id), 'bg-info')
+            
+        }
+        // Create variable to hold map element, give initial settings to map
+        var map = L.map('map',{ center: [48.14816, 17.10674], zoom: 10});
+        // Add OpenStreetMap tile layer to map element
+        
+        //- L.tileLayer('https://api.mapbox.com/styles/v1/maxxis4/cjoxjtp0lcbxx2rp606381zws.html?fresh=true&title=true&access_token=pk.eyJ1IjoibWF4eGlzNCIsImEiOiJjam94anJlejUyN3ZpM3FqeGlvdHF3bnJoIn0.icgI9y9IDKPJileJa_Y2ng', {
+        //- 	attribution: '© OpenStreetMap'
+        //- }).addTo(map);
+        L.tileLayer('https://api.mapbox.com/styles/v1/maxxis4/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+            maxZoom: 18,
+            id: 'cjoxjtp0lcbxx2rp606381zws',
+            accessToken: 'pk.eyJ1IjoibWF4eGlzNCIsImEiOiJjam94anJlejUyN3ZpM3FqeGlvdHF3bnJoIn0.icgI9y9IDKPJileJa_Y2ng'
+        }).addTo(map);
+        // Add JSON to map
+        if (myData.features.length != 0){
+            L.geoJson(myData,{
+                pointToLayer: function(feature, latlng) {
+                    var marker = L.AwesomeMarkers.icon({
+                        icon: getIcon(feature.info.type),
+                        markerColor: 'blue'
+                    });
+                    return L.marker(latlng, {icon: marker});
+                },
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup(feature.properties.f2);
+                    layer.on('click', onMarkerClick);
+                    polygons.push(layer);
+                }
+            }).addTo(map);
+            var group = new L.featureGroup(polygons);
+            map.fitBounds(group.getBounds());
+        }
+        map.on('click', function(e) {
+            var els = document.querySelectorAll('.lat_input');
+            for (var i=0; i < els.length; i++) {
+                els[i].setAttribute("value",e.latlng.lat);
+            }
+
+            var els = document.querySelectorAll('.long_input');
+            for (var i=0; i < els.length; i++) {
+                els[i].setAttribute("value",e.latlng.lng);
+            }
+            if (myPosMarker){
+                map.removeLayer(myPosMarker);
+            }
+            myPosMarker = L.marker(e.latlng, {icon: myPosMarkerIcon});
+            myPosMarker.addTo(map);
+        });
+
+        function addRowHandlers() {
+            var table = document.getElementById("result-table");
+            var rows = table.getElementsByTagName("tr");
+            for (i = 0; i < rows.length; i++) {
+                var currentRow = table.rows[i];
+                var createClickHandler = function(row) {
+                return function() {
+                    var els = document.querySelectorAll('.id_input');
+                    for (var i=0; i < els.length; i++) {
+                        els[i].setAttribute("value",row.id);
+                    }
+                    if(typeof polygons[0].setIcon === 'function') {
+                        for (var i=0; i < polygons.length; i++) {
+                            var marker = L.AwesomeMarkers.icon({
+                                icon: getIcon(polygons[i].feature.info.type),
+                                markerColor: 'blue'
+                            });
+                            polygons[i].setIcon(marker);
+                        }
+                        var id = row.id;
+                        polygon = polygons.filter(obj => {
+                                    return obj.feature.info.id == id
+                                })
+                        var selMarker = L.AwesomeMarkers.icon({
+                                icon: getIcon(polygon[0].feature.info.type),
+                                markerColor: 'red'
+                            });
+                        polygon[0].setIcon(selMarker);
+                        
+                    } else {
+                        for (var i=0; i < polygons.length; i++) {
+                            polygons[i].setStyle({fillColor: '#0000FF'});
+                        }
+                        var id = row.id;
+                        polygon = polygons.filter(obj => {
+                                    return obj.feature.info.id == id
+                                })
+                        polygon[0].setStyle({fillColor: '#FF0000'});
+                    }
+                    map.setView([ polygon[0].feature.info.cent_lat, polygon[0].feature.info.cent_long], 18);
+                    setClassResultTable(this, 'bg-info');
+                };
+            };
+            currentRow.onclick = createClickHandler(currentRow);
+            }
+        }
+
+        addRowHandlers();

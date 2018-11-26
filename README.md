@@ -18,10 +18,22 @@ Build a map-based application, which lets the user see geo-based data on a map a
 
 ## My project
 
-Fill in (either in English, or in Slovak):
+**Application description**: Aplikácia umožňuje vyhľadávanie historických pamiatok v okolí. Používateľ môže vyhľadávať pamiatky v rámci mesta, v definovanom okruhu, najbližšie pamiatky alebo zaujímavosti na rieke. Taktiež má možnosť po výbere pamiatky nájsť si v okolí parkovanie.
 
-**Application description**: `<fill in>`
+**Data source**: [Open Street Maps](https://www.openstreetmap.org/)
 
-**Data source**: `<fill in>`
-
-**Technologies used**: `<fill in>`
+**Technologies used**:
+  * BE:
+    * [Node.js](https://nodejs.org/en/)
+    * [Express](https://expressjs.com/)
+  * FE:
+    * [Pug.js](https://pugjs.org)
+    * [Bootstrap](https://getbootstrap.com/)
+    * [Leaflet](https://leafletjs.com/)
+    * [MapBox](https://mapbox.com)
+  * DB:
+    * [PostgreSQL](https://www.postgresql.org/)
+    * [PostGIS](https://postgis.net/)
+    * [Node Postgres](https://node-postgres.com/)
+  * Ops:
+    * [Docker](https://www.docker.com/)
