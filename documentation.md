@@ -1,4 +1,5 @@
 # Prehľad
+**Jakub Kazimír**
 
 Táto aplikácia zobrazuje historické pamiatky na Slovensku a okolitých malých častiach susedných štátov. Hlavné možnosti aplikácie:
 - Vyhľadávanie vybraných historických pamiatok
@@ -62,7 +63,7 @@ Ukážka dopytu na databázu pre hľadanie zaujímavosti na rieke:
             END as type
        FROM planet_osm_polygon AS place
        JOIN planet_osm_line AS river ON (ST_Crosses(place.geom,river.geom))
-      WHERE river.name = $1
+      WHERE river.name = 'Dunaj'
 		    AND river.waterway = 'river'
         AND place.admin_level is null
         AND place.boundary is null
@@ -70,6 +71,79 @@ Ukážka dopytu na databázu pre hľadanie zaujímavosti na rieke:
         AND (place.water <> 'river' OR place.water IS null)
         AND place.name IS NOT NULL
 ```
+
+Ukážka dopytu na databázu pre hľadanie zaujímavosti v meste:
+```
+    SELECT  distinct(place.id), 
+            place.name as name, 
+            ST_Centroid(place.geom) as geom,
+            ST_X(ST_Centroid(place.geom)) as cent_long,
+            ST_Y(ST_Centroid(place.geom)) as cent_lat,
+            place.historic as type
+       FROM planet_osm_polygon AS city, 
+            planet_osm_polygon AS place
+      WHERE ST_Intersects(city.geom,place.geom)
+        AND ST_Area(ST_Intersection(city.geom,place.geom)) != ST_Area(city.geom)
+        AND place.name IS NOT NULL
+        AND city.name = 'Bratislava'
+        AND place.historic IN ('castle')
+```
+
+Ukážka dopytu na databázu pre hľadanie zaujímavosti v okolí:
+```
+    SELECT  distinct(lg.id), 
+            lg.name,
+            ST_Centroid(lg.geom) as geom,
+            ST_X(ST_Centroid(lg.geom)) as cent_long,
+            ST_Y(ST_Centroid(lg.geom)) as cent_lat,
+            lg.historic as type,
+            ST_Distance(lg.geom, ST_MakePoint($1,$2)::geography) as distance
+       FROM planet_osm_polygon as lg
+      WHERE ST_DWithin(lg.geom, ST_MakePoint(17,46)::geography, 1000)
+        AND lg.admin_level is null
+        AND lg.boundary is null
+        AND lg.place is null
+        AND lg.historic IN ('castle')
+        AND lg.name IS NOT NULL
+      ORDER BY distance
+```
+
+Ukážka dopytu na databázu pre hľadanie parkovania pri pamiatke:
+```
+    SELECT distinct(parking.id),
+           parking.name,
+           parking.geom,
+           ST_X(ST_Centroid(parking.geom)) as cent_long,
+           ST_Y(ST_Centroid(parking.geom)) as cent_lat,
+           'parking' as type,
+           st_distance(ST_Centroid(place.geom), parking.geom) as dist
+      FROM planet_osm_polygon place,
+           planet_osm_point parking
+     WHERE place.id = $1
+       AND parking.amenity = 'parking'
+     ORDER BY st_distance(ST_Centroid(place.geom), parking.geom)
+     LIMIT 10
+```
+
+Ukážka dopytu na databázu pre hľadanie najbližších zaujímavostí:
+```
+    SELECT distinct(lg.id),
+           lg.name,
+           ST_Centroid(lg.geom) as geom,
+           st_distance(lg.geom, ST_MakePoint(17,47)::geography) as distance,
+           ST_X(ST_Centroid(lg.geom)) as cent_long,
+           ST_Y(ST_Centroid(lg.geom)) as cent_lat,
+           lg.historic as type
+      FROM planet_osm_polygon lg
+     WHERE lg.admin_level is null
+       AND lg.boundary is null
+       AND lg.place is null
+       AND lg.historic IN ('castle')
+       AND lg.name IS NOT NULL
+     ORDER BY distance 
+     LIMIT 20
+```
+
 Všetky requesty boli ešte obalené vo formáte, ktorý vytváral GeoJSON pre použitú knižnicu [Leaflet](https://leafletjs.com/). Taktiež boli všetky dopyty vyskladávané pomocou knižnice [Node Postgres](https://node-postgres.com/).
 
 Všetky tieto dopyty sa nachádzajú v súbore [index.js](routes/index.js).
