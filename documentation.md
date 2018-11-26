@@ -15,7 +15,7 @@ Táto aplikácia zobrazuje historické pamiatky na Slovensku a okolitých malýc
 
 Takto vyzerá aplikácia s vyhľadanými pamiatkami:
 
-![Screenshot](find_by_name.png)
+![Screenshot](gui.png)
 
 Aplikácia je zložená z FE, ktorý je vytvorený pomocou knižnice [Leaflet](https://leafletjs.com/) pre hlavný mapový komponent a [Pug.js](https://pugjs.org) pre vytvorenie HTML stránky. Backend je vytvorený vo frameworku [Express.js](https://expressjs.com/), ktorý beží na [Node.js](https://nodejs.org/en/). Tento framework sa pripája na [PostGIS](https://postgis.net/) databázu, v ktorej sú uložené všetky dáta. Keďže [Express.js](https://expressjs.com/) je serverový framework, všetko potrebné je vykonané na serveri, ktorý na FE odošle plnú HTML stránku so všetkými údajmi.
 
