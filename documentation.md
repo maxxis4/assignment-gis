@@ -23,6 +23,8 @@ Aplikácia je zložená z FE, ktorý je vytvorený pomocou knižnice [Leaflet](h
 
 Aplikácia je vytvorená pomocou šablónového frameworku [Pug.js](https://pugjs.org), ktorý sme rozšírili o Bootstrap, jQuery a [Leaflet.awesome-markers](https://github.com/lvoogdt/Leaflet.awesome-markers), čo je opensource knižnica pre používanie vlastných ikon ako označovačov na mape. Táto knižnica bola upravená pre použitie špeciálnych ikon - [Font Awesome](https://fontawesome.com/). Taktiež sme vytvorili vlastné validácie a interakcie medzi tabuľkou a mapou, pre lepší zážitok z používania aplikácie. Pre zobrazenie geografických dát sme použili knižnicu [Leaflet](https://leafletjs.com/), spolu s nami vytvoreným mapovým podkladom na [MapBox](https://mapbox.com).
 
+Mapový podklad bol zmenený pomocou farieb pozadia, budov, riek a iných objektov. Taktiež bol zmenený štýl písma a boli pridané nové ikony pre body záujmu, ktoré sa líšia na základe typu pamiatky.
+
 Šablóna HTML kódu sa nachádza v [map.pug](views/map.pug), kde sú aj všetky javascripty starajúce sa o interakcie tabuľky a mapy.
 
 # Backend
